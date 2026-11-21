@@ -1,315 +1,580 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
-import '../widgets/brand_components.dart';
-import 'allergy_results_screen.dart';
+import 'package:image_picker/image_picker.dart';
 
-class ScannerScreen extends StatefulWidget {
-  const ScannerScreen({super.key});
+import '../controllers/bitesano_controller.dart';
+import '../models/menu.dart';
+import '../theme/app_theme.dart';
+import '../widgets/allergy_tiles.dart';
+import '../widgets/brand.dart';
+import '../widgets/result_card.dart';
 
-  @override
-  State<ScannerScreen> createState() => _ScannerScreenState();
-}
+class ScannerScreen extends StatelessWidget {
+  final BiteSanoController controller;
+  final VoidCallback onAllergies;
+  final VoidCallback onAnalyzed;
+  const ScannerScreen({
+    super.key,
+    required this.controller,
+    required this.onAllergies,
+    required this.onAnalyzed,
+  });
 
-class _ScannerScreenState extends State<ScannerScreen> {
-  bool _flashOn = false;
-  bool _scanning = false;
-  bool _showAltSample = false;
-
-  // Aquí conectarás el http.post al backend de tu compañero
-  Future<void> _runScan() async {
-    if (_scanning) return;
-    setState(() => _scanning = true);
-    await Future.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
-    setState(() {
-      _scanning = false;
-      _showAltSample = !_showAltSample;
-    });
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const AllergyResultsScreen()),
+  Future<void> _edit(BuildContext context, [MenuItem? original]) async {
+    final name = TextEditingController(text: original?.name ?? '');
+    final price = TextEditingController(text: original?.price ?? '');
+    final description = TextEditingController(
+      text: original?.description ?? '',
     );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final results = _showAltSample
-        ? [
-            ('Risotto Frutti di Mare', 'Contiene camarón, mejillones y caldo de mariscos.', false),
-            ('Tacos de Nopal Asado', 'Libre de maní, mariscos y gluten en tortilla de maíz.', true),
-          ]
-        : [
-            ('Pad Thai de Cacahuate', 'Contiene cacahuate tostado y pasta de maní en salsa.', false),
-            ('Ensalada César Vegana', 'Libre de gluten, frutos secos y mariscos.', true),
-          ];
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _header(),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
-                children: [
-                  _cameraViewfinder(),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      const Icon(Icons.psychology_outlined, size: 20, color: BiteSanoColors.forest),
-                      const SizedBox(width: 8),
-                      const Text('Resumen Instantáneo', style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w700)),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: const Color(0xFFE8F0FE), borderRadius: BorderRadius.circular(12)),
-                        child: Text('${results.length} platillos', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E3A8A))),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ...results.map(_resultCard),
-                ],
-              ),
-            ),
-          ],
+    final form = GlobalKey<FormState>();
+    final update = await showDialog<MenuItem>(
+      context: context,
+      builder: (context) => AlertDialog(
+        scrollable: true,
+        title: Text(
+          original == null ? 'Agregar producto' : 'Corregir producto',
         ),
-      ),
-    );
-  }
-
-  Widget _header() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: const Row(
-          children: [
-            BrandMark(size: 36),
-            SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                BiteSanoWordmark(fontSize: 19),
-                Text('Escáner De Menú', style: TextStyle(fontSize: 12, color: BiteSanoColors.mutedText)),
-              ],
-            ),
-            Spacer(),
-            CircleAvatar(radius: 19, backgroundColor: Color(0xFFE0F0EE), child: Icon(Icons.person_rounded, color: BiteSanoColors.deepForest)),
-          ],
-        ),
-      );
-
-  Widget _cameraViewfinder() => Container(
-        height: 410,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(26),
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF2B3538), Color(0xFF4A463F), Color(0xFF232C30)],
-          ),
-        ),
-        child: Column(
-          children: [
-            // Controles superiores (Flash, Idioma, Tip)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _circleBtn(_flashOn ? Icons.flashlight_on_rounded : Icons.flashlight_off_rounded, () => setState(() => _flashOn = !_flashOn)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(20)),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.translate_rounded, size: 15, color: Color(0xFF6EE7B7)),
-                      SizedBox(width: 6),
-                      Text('ES / Menú Detectado', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ),
-                _circleBtn(Icons.lightbulb_outline_rounded, () {}),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Banner de vigilancia activa
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              decoration: BoxDecoration(color: const Color(0xFF162226).withValues(alpha: 0.85), borderRadius: BorderRadius.circular(14)),
-              child: const Row(
-                children: [
-                  Icon(Icons.circle, size: 8, color: Color(0xFF34D399)),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('VIGILANCIA IA ACTIVA', style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 10, fontWeight: FontWeight.w700)),
-                        Text('Filtros: Maní, Mariscos y Gluten', style: TextStyle(color: Colors.white, fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                  Icon(Icons.verified_user_outlined, color: Color(0xFF6EE7B7), size: 19),
-                ],
-              ),
-            ),
-            // Marco central de enfoque (aquí irá el CameraPreview real)
-            Expanded(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  CustomPaint(size: const Size(double.infinity, 190), painter: _CornersPainter()),
-                  if (_scanning)
-                    const CircularProgressIndicator(color: Color(0xFF6EE7B7))
-                  else
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _tagPill('¡ALÉRGENO! (MANÍ)', const Color(0xFFB91C1C), Icons.warning_amber_rounded),
-                        const SizedBox(height: 12),
-                        _tagPill('100% SEGURO', BiteSanoColors.forest, Icons.check_circle_outline_rounded),
-                      ],
-                    ),
-                  Positioned(
-                    bottom: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(color: const Color(0xFF162226).withValues(alpha: 0.88), borderRadius: BorderRadius.circular(18)),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.center_focus_weak_rounded, size: 14, color: Color(0xFF6EE7B7)),
-                          SizedBox(width: 6),
-                          Text('Apunta al texto o párrafos del menú', style: TextStyle(color: Colors.white, fontSize: 11.5)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Controles inferiores (Galería, Escanear Todo, Menú QR)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _actionCol(Icons.photo_library_outlined, 'Galería', false, _runScan),
-                _actionCol(Icons.document_scanner_rounded, 'Escanear Todo', true, _runScan),
-                _actionCol(Icons.qr_code_scanner_rounded, 'Menú QR', false, _runScan),
-              ],
-            ),
-          ],
-        ),
-      );
-
-  Widget _circleBtn(IconData icon, VoidCallback onTap) => InkWell(
-        onTap: onTap,
-        child: CircleAvatar(radius: 18, backgroundColor: Colors.black45, child: Icon(icon, size: 18, color: Colors.white)),
-      );
-
-  Widget _tagPill(String text, Color color, IconData icon) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(16)),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: Colors.white),
-            const SizedBox(width: 5),
-            Text(text, style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w700)),
-          ],
-        ),
-      );
-
-  Widget _actionCol(IconData icon, String label, bool primary, VoidCallback onTap) => GestureDetector(
-        onTap: onTap,
-        child: Column(
-          children: [
-            Container(
-              width: primary ? 56 : 44,
-              height: primary ? 56 : 44,
-              decoration: BoxDecoration(
-                color: primary ? Colors.white : Colors.black45,
-                shape: primary ? BoxShape.circle : BoxShape.rectangle,
-                borderRadius: primary ? null : BorderRadius.circular(14),
-                border: primary ? Border.all(color: const Color(0xFF34D399), width: 3) : null,
-              ),
-              child: Icon(icon, color: primary ? BiteSanoColors.forest : Colors.white, size: primary ? 26 : 20),
-            ),
-            const SizedBox(height: 5),
-            Text(label, style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: primary ? FontWeight.w700 : FontWeight.w500)),
-          ],
-        ),
-      );
-
-  Widget _resultCard((String, String, bool) item) {
-    final color = item.$3 ? BiteSanoColors.forest : const Color(0xFFB91C1C);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color(0xFFE5ECF6)),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          decoration: BoxDecoration(border: Border(left: BorderSide(color: color, width: 4))),
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-          child: Row(
+        content: Form(
+          key: form,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.$1, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 2),
-                    Text(item.$2, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: BiteSanoColors.mutedText)),
-                  ],
-                ),
+              TextFormField(
+                controller: name,
+                decoration: const InputDecoration(labelText: 'Nombre'),
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? 'Escribe un nombre' : null,
               ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => showDialog<void>(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    title: Text(item.$1),
-                    content: Text(item.$2),
-                    actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Entendido'))],
-                  ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: price,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
                 ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: item.$3 ? BiteSanoColors.forest : const Color(0xFFFDE8E8),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    item.$3 ? 'Apto' : 'Ver detalle',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: item.$3 ? Colors.white : const Color(0xFFB91C1C)),
-                  ),
+                decoration: const InputDecoration(
+                  labelText: 'Precio (opcional)',
+                ),
+                validator: (v) =>
+                    v == null ||
+                        v.trim().isEmpty ||
+                        RegExp(r'^\d+(?:[.,]\d{1,2})?$').hasMatch(v.trim())
+                    ? null
+                    : 'Importe no válido',
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: description,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Descripción / ingredientes (opcional)',
                 ),
               ),
             ],
           ),
         ),
+        actions: [
+          if (original != null)
+            TextButton(
+              onPressed: () => Navigator.pop(context, const MenuItem('', null)),
+              child: const Text('Quitar'),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (form.currentState?.validate() != true) return;
+              Navigator.pop(
+                context,
+                MenuItem(
+                  name.text.trim(),
+                  price.text.trim().isEmpty ? null : price.text.trim(),
+                  description: description.text.trim().isEmpty
+                      ? null
+                      : description.text.trim(),
+                  section: original?.section,
+                  currency: original?.currency ?? r'$',
+                ),
+              );
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
       ),
+    );
+    name.dispose();
+    price.dispose();
+    description.dispose();
+    if (update != null)
+      controller.edit(original, update.name.isEmpty ? null : update);
+  }
+
+  void _qr(BuildContext context) => showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Menú QR'),
+      content: const Text(
+        'La lectura de códigos QR todavía no está integrada. Puedes abrir el menú con la cámara de tu teléfono y cargar una captura desde Galería.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Entendido'),
+        ),
+      ],
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final c = controller;
+    final names = c.selected.map((a) => allergyInfo(a).title).join(', ');
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 22),
+      children: [
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: const Color(0xff172838),
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: Column(
+            children: [
+              SizedBox(
+                height: 360,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (c.image != null)
+                      Image.memory(c.image!, fit: BoxFit.contain)
+                    else
+                      Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xff354e54),
+                              Color(0xff132331),
+                              Color(0xff203d40),
+                            ],
+                          ),
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                c.demo
+                                    ? Icons.restaurant_menu
+                                    : Icons.document_scanner_outlined,
+                                size: 75,
+                                color: const Color(0xff7bd8b9),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                c.demo
+                                    ? 'Menú de demostración'
+                                    : 'Escanea un menú',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 23,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 40,
+                                ),
+                                child: Text(
+                                  c.demo ? 'Ejemplo local, sin internet.' : 'Captura una fotografía legible con todos los precios.',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Color(0xffb2c6cb),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if (c.image != null)
+                      Container(color: Colors.black.withValues(alpha: .12)),
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 11,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xe61c3041),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.shield_outlined,
+                              color: Color(0xff8ce6c4),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    c.allergies.isEmpty
+                                        ? 'CONFIGURA TU PERFIL'
+                                        : 'PERFIL DE ALERGIAS ACTIVO',
+                                    style: const TextStyle(
+                                      color: Color(0xff8ce6c4),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  Text(
+                                    c.allergies.isEmpty
+                                        ? 'Selecciona tus alergias'
+                                        : '${c.allergies.length} filtros: $names',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: c.busy ? null : onAllergies,
+                              tooltip: 'Gestionar alergias',
+                              icon: const Icon(Icons.tune, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const Positioned(
+                      top: 92,
+                      bottom: 47,
+                      left: 18,
+                      right: 18,
+                      child: IgnorePointer(
+                        child: CustomPaint(painter: _ScanFrame()),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 12,
+                      left: 20,
+                      right: 20,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xe61c3041),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.center_focus_strong_outlined,
+                                size: 17,
+                                color: Color(0xff8ce6c4),
+                              ),
+                              const SizedBox(width: 7),
+                              Flexible(
+                                child: Text(
+                                  c.busy
+                                      ? 'Procesando menú…'
+                                      : c.image != null
+                                      ? 'Foto leída · ${c.items.length} productos'
+                                      : 'Apunta al texto o párrafos del menú',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(15, 0, 15, 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Expanded(
+                      child: _Action(
+                        icon: Icons.photo_library_outlined,
+                        label: 'Galería',
+                        onTap: c.busy
+                            ? null
+                            : () => c.pick(ImageSource.gallery),
+                      ),
+                    ),
+                    Expanded(
+                      child: _Action(
+                        icon: Icons.camera_alt_outlined,
+                        label: 'Escanear todo',
+                        main: true,
+                        onTap: c.busy ? null : () => c.pick(ImageSource.camera),
+                      ),
+                    ),
+                    Expanded(
+                      child: _Action(
+                        icon: Icons.qr_code_scanner,
+                        label: 'Menú QR',
+                        onTap: c.busy ? null : () => _qr(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 15),
+        if (c.busy) const LinearProgressIndicator(),
+        if (c.error != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              c.error!,
+              style: const TextStyle(color: BiteColors.amber),
+            ),
+          ),
+        if (c.demo)
+          const SurfaceCard(
+            color: BiteColors.input,
+            child: Text(
+              'Modo demostración: catálogo ficticio. No realiza consultas a internet.',
+            ),
+          ),
+        if (c.alerts && c.analysisStarted && c.count(MenuFilter.risk) > 0)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: SurfaceCard(
+              color: BiteColors.dangerBg,
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    color: BiteColors.danger,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${c.count(MenuFilter.risk)} posibles riesgos encontrados',
+                      style: const TextStyle(
+                        color: BiteColors.danger,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        Row(
+          children: [
+            const Icon(Icons.manage_search, color: BiteColors.green),
+            const SizedBox(width: 7),
+            Expanded(
+              child: Text(
+                'Resumen instantáneo',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            StatusPill(
+              label: '${c.items.length} PLATILLOS',
+              background: BiteColors.blueBg,
+              color: BiteColors.blueGray,
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (c.items.isEmpty)
+          const SurfaceCard(
+            child: Text(
+              'Toma una foto o selecciona una imagen para mostrar los productos detectados.',
+            ),
+          )
+        else ...[
+          if (!c.demo)
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Revisa nombres y precios antes de analizar.',
+                    style: TextStyle(fontSize: 12, color: BiteColors.muted),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: c.busy ? null : () => _edit(context),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Añadir'),
+                ),
+              ],
+            ),
+          FilledButton.icon(
+            onPressed: c.busy
+                ? null
+                : c.allergies.isEmpty
+                ? onAllergies
+                : () async {
+                    final ok = await c.analyze();
+                    if (ok) onAnalyzed();
+                  },
+            icon: const Icon(Icons.health_and_safety_outlined),
+            label: Text(
+              c.allergies.isEmpty
+                  ? 'Configurar alergias y escanear'
+                  : 'Analizar menú con mis alergias',
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...c.items.map(
+            (item) => ResultCard(
+              item: item,
+              result: c.results[item],
+              compact: true,
+              onEdit: c.busy || c.demo ? null : () => _edit(context, item),
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: c.busy ? null : c.loadDemo,
+          icon: const Icon(Icons.play_circle_outline),
+          label: const Text('Cargar menú de demostración sin internet'),
+        ),
+        const SizedBox(height: 10),
+        SurfaceCard(
+          padding: EdgeInsets.zero,
+          child: SwitchListTile(
+            value: c.useOnline && !c.demo,
+            onChanged: c.busy || c.demo ? null : c.setOnline,
+            secondary: const Icon(
+              Icons.cloud_outlined,
+              color: BiteColors.green,
+            ),
+            title: const Text('Consulta opcional a Spoonacular'),
+            subtitle: Text(
+              c.demo
+                  ? 'Desactivada en la demostración.'
+                  : c.useOnline
+                  ? 'Solo para productos sin referencia local. ${c.repository.remote.quotaLeft == null ? '' : 'Puntos restantes: ${c.repository.remote.quotaLeft!.toStringAsFixed(2)}'}'
+                  : 'Modo local · No consume puntos.',
+            ),
+          ),
+        ),
+        if (c.useOnline && !c.demo && c.repository.remote.blockedReason != null)
+          Text(
+            c.repository.remote.blockedReason!,
+            style: const TextStyle(color: BiteColors.amber),
+          ),
+        const SizedBox(height: 10),
+        const Text(
+          'Las referencias no verifican los ingredientes reales de un restaurante.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 11, color: BiteColors.muted),
+        ),
+      ],
     );
   }
 }
 
-class _CornersPainter extends CustomPainter {
+class _Action extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool main;
+  final VoidCallback? onTap;
+  const _Action({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.main = false,
+  });
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(18),
+    child: Padding(
+      padding: const EdgeInsets.all(5),
+      child: Column(
+        children: [
+          Container(
+            width: main ? 60 : 48,
+            height: main ? 60 : 48,
+            decoration: BoxDecoration(
+              color: main ? BiteColors.green : const Color(0xff2b4153),
+              borderRadius: BorderRadius.circular(main ? 30 : 15),
+              border: main ? Border.all(color: Colors.white, width: 3) : null,
+            ),
+            child: Icon(
+              icon,
+              color: onTap == null ? Colors.white54 : Colors.white,
+              size: main ? 30 : 23,
+            ),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _ScanFrame extends CustomPainter {
+  const _ScanFrame();
   @override
   void paint(Canvas canvas, Size size) {
     final p = Paint()
-      ..color = const Color(0xFF6EE7B7)
-      ..strokeWidth = 3
+      ..color = const Color(0xff92f7cc)
+      ..strokeWidth = 4
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
-    const len = 22.0;
-    const r = 14.0;
-    final w = size.width;
-    final h = size.height;
-
-    canvas.drawPath(Path()..moveTo(0, len)..lineTo(0, r)..quadraticBezierTo(0, 0, r, 0)..lineTo(len, 0), p);
-    canvas.drawPath(Path()..moveTo(w - len, 0)..lineTo(w - r, 0)..quadraticBezierTo(w, 0, w, r)..lineTo(w, len), p);
-    canvas.drawPath(Path()..moveTo(0, h - len)..lineTo(0, h - r)..quadraticBezierTo(0, h, r, h)..lineTo(len, h), p);
-    canvas.drawPath(Path()..moveTo(w - len, h)..lineTo(w - r, h)..quadraticBezierTo(w, h, w, h - r)..lineTo(w, h - len), p);
+    final l = math.min(40.0, size.width * .18);
+    final r = Rect.fromLTWH(0, 0, size.width, size.height);
+    for (final c in [
+      (r.topLeft, 1.0, 1.0),
+      (r.topRight, -1.0, 1.0),
+      (r.bottomLeft, 1.0, -1.0),
+      (r.bottomRight, -1.0, -1.0),
+    ]) {
+      final v = c.$1;
+      final path = Path()
+        ..moveTo(v.dx + c.$2 * l, v.dy)
+        ..lineTo(v.dx, v.dy)
+        ..lineTo(v.dx, v.dy + c.$3 * l);
+      canvas.drawPath(path, p);
+    }
   }
 
   @override
