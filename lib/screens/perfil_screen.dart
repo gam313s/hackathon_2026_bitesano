@@ -26,6 +26,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  _buildHeader(),
+                  const SizedBox(height: 24),
                   _buildUserCard(),
                   const SizedBox(height: 30),
                   _buildSectionTitle('Mi Perfil Médico', trailing: '4 activas'),
@@ -49,20 +51,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: SizedBox(
-        width: 68,
-        height: 68,
-        child: FloatingActionButton(
-          onPressed: () {},
-          elevation: 0,
-          shape: const CircleBorder(),
-          backgroundColor: BiteSanoColors.forest,
-          foregroundColor: Colors.white,
-          child: const Icon(Icons.photo_camera_outlined, size: 30),
-        ),
-      ),
-      bottomNavigationBar: _buildBottomBar(),
     );
   }
 
@@ -406,51 +394,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
       ),
     );
   }
-
-  Widget _buildBottomBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF263B49).withValues(alpha: 0.07),
-            blurRadius: 28,
-            offset: const Offset(0, -8),
-          ),
-        ],
-      ),
-      child: const SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 76,
-          child: Row(
-            children: [
-              Expanded(
-                child: _NavItem(
-                  icon: Icons.verified_user_outlined,
-                  label: 'Inicio',
-                ),
-              ),
-              Expanded(child: _NavItem(label: 'Escanear')),
-              Expanded(
-                child: _NavItem(
-                  icon: Icons.assignment_outlined,
-                  label: 'Historial',
-                ),
-              ),
-              Expanded(
-                child: _NavItem(
-                  icon: Icons.manage_accounts_outlined,
-                  label: 'Perfil',
-                  selected: true,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 const _redBg = Color(0xFFFDE4E2);
@@ -629,39 +572,6 @@ class _LinkTile extends StatelessWidget {
           Icon(Icons.chevron_right_rounded, color: BiteSanoColors.mutedText),
         ],
       ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  const _NavItem({this.icon, required this.label, this.selected = false});
-
-  final IconData? icon;
-  final String label;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final color =
-        selected ? BiteSanoColors.forest : const Color(0xFF283331);
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        if (icon != null)
-          Icon(icon, color: color, size: 26)
-        else
-          const SizedBox(height: 26),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 10),
-      ],
     );
   }
 }
