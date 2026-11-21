@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../widgets/bite_sano_bottom_nav.dart';
-import 'perfil_screen.dart';
 import 'home_screen.dart';
+import 'perfil_screen.dart';
+import 'scanner_screen.dart';
+
 class MainShellScreen extends StatefulWidget {
   const MainShellScreen({super.key, this.initialIndex = 0});
   final int initialIndex;
@@ -21,19 +23,11 @@ class _MainShellScreenState extends State<MainShellScreen> {
       HomeScreen(
         onOpenScanner: () => _setTab(1),
         onOpenHistory: () => _setTab(2),
-        onEditAllergies: () => Navigator.push(
-          context,
-          MaterialPageRoute<void>(
-            builder: (_) => Scaffold(
-              appBar: AppBar(title: const Text('Mis Alergias')),
-              body: const Center(child: Text('Editar Alergias')),
-            ),
-          ),
-        ),
+        onEditAllergies: () => _setTab(3), // Te lleva directo a PerfilScreen
       ),
-      const Center(child: Text('Escáner IA', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+      const ScannerScreen(),
       const Center(child: Text('Historial', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
-      const Center(child: Text('Perfil', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+      const PerfilScreen(),
     ];
 
     return Scaffold(
