@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/bite_sano_bottom_nav.dart';
-import 'allergy_profile_screen.dart';
+import 'perfil_screen.dart';
 import 'home_screen.dart';
-
 class MainShellScreen extends StatefulWidget {
   const MainShellScreen({super.key, this.initialIndex = 0});
   final int initialIndex;
@@ -25,10 +24,10 @@ class _MainShellScreenState extends State<MainShellScreen> {
         onEditAllergies: () => Navigator.push(
           context,
           MaterialPageRoute<void>(
-            builder: (_) => AllergyProfileScreen(onContinueToScanner: () {
-              Navigator.pop(context);
-              _setTab(1);
-            }),
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: const Text('Mis Alergias')),
+              body: const Center(child: Text('Editar Alergias')),
+            ),
           ),
         ),
       ),
