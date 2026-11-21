@@ -1,4 +1,4 @@
-import '../data/allergens.dart';
+import '../data/catalog.dart';
 import '../models/menu.dart';
 import '../services/allergy_service.dart';
 import '../services/spoonacular_service.dart';
@@ -16,7 +16,7 @@ class FoodRepository {
     required bool demo,
     required bool useOnline,
   }) async {
-    final terms = <String, List<String>>{...allergyTerms};
+    final terms = <String, List<String>>{...currentCatalog.allergyTerms};
     for (final allergy in allergies) {
       terms.putIfAbsent(allergy, () => [allergy]);
     }

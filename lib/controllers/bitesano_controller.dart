@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../data/food_catalog.dart';
+import '../data/catalog.dart';
+import '../models/account.dart';
 import '../models/menu.dart';
 import '../models/profile.dart';
 import '../models/analysis_snapshot.dart';
+import '../repositories/catalog_repository.dart';
 import '../repositories/food_repository.dart';
+import '../services/auth_service.dart';
 import '../services/menu_ocr_service.dart';
 import '../services/preferences_service.dart';
 import '../utils/food_text.dart';
@@ -16,15 +19,21 @@ class BiteSanoController extends ChangeNotifier {
   final MenuOcrService _ocr;
   final PreferencesService _preferences;
   final ImagePicker _picker;
+  final AuthService _auth;
+  final CatalogRepository _catalog;
   BiteSanoController({
     FoodRepository? repository,
     MenuOcrService? ocr,
     PreferencesService? preferences,
     ImagePicker? picker,
+    AuthService? auth,
+    CatalogRepository? catalog,
   }) : repository = repository ?? FoodRepository(),
        _ocr = ocr ?? MenuOcrService(),
        _preferences = preferences ?? PreferencesService(),
-       _picker = picker ?? ImagePicker();
+       _picker = picker ?? ImagePicker(),
+       _auth = auth ?? SqliteAuthService(),
+       _catalog = catalog ?? CatalogRepository();
 
   bool ready = false;
   bool signedIn = false;
@@ -63,7 +72,19 @@ class BiteSanoController extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
+  /// Lee el catálogo de alimentos y alérgenos desde SQLite. Si la base no está
+  /// disponible, la app sigue con el catálogo incluido en lib/data.
+  Future<void> _loadCatalog() async {
+    try {
+      final loaded = await _catalog.load();
+      if (!_disposed) currentCatalog = loaded;
+    } catch (_) {
+      // Se conserva el catálogo incluido.
+    }
+  }
+
   Future<void> initialize() async {
+    await _loadCatalog();
     final stored = await _preferences.load();
     if (_disposed) return;
     if (stored != null &&
@@ -93,6 +114,46 @@ class BiteSanoController extends ChangeNotifier {
     _notify();
     await saveProfile();
     return true;
+  }
+
+  /// Devuelve null si todo salió bien, o el mensaje de error para mostrar.
+  Future<String?> login(String identifier, String password, bool keep) =>
+      _authenticate(() => _auth.login(identifier, password), keep);
+
+  /// Crea la cuenta SIN iniciar sesión: el usuario debe entrar desde el acceso.
+  /// Devuelve null si todo salió bien, o el mensaje de error para mostrar.
+  Future<String?> register({
+    required String username,
+    required String email,
+    required String password,
+  }) async {
+    if (_disposed) return 'Inténtalo de nuevo';
+    try {
+      await _auth.register(username: username, email: email, password: password);
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (_) {
+      return 'No se pudo acceder a la base de datos de este dispositivo.';
+    }
+  }
+
+  Future<String?> _authenticate(Future<Account> Function() action, bool keep) async {
+    if (_disposed) return 'Inténtalo de nuevo';
+    try {
+      final account = await action();
+      name = account.username;
+      email = account.email;
+      remember = keep;
+      signedIn = true;
+      _notify();
+      await saveProfile();
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (_) {
+      return 'No se pudo acceder a la base de datos de este dispositivo.';
+    }
   }
 
   Future<void> saveProfile() async {
@@ -220,7 +281,7 @@ class BiteSanoController extends ChangeNotifier {
     if (busy) return;
     image = null;
     demo = true;
-    items = List.of(demoMenu);
+    items = List.of(currentCatalog.demoMenu);
     _invalidate();
     _notify();
   }

@@ -14,13 +14,15 @@ import 'profile_screen.dart';
 import 'scanner_screen.dart';
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  /// Permite inyectar un controlador (pruebas).
+  final BiteSanoController? controller;
+  const AppShell({super.key, this.controller});
   @override
   State<AppShell> createState() => _AppShellState();
 }
 
 class _AppShellState extends State<AppShell> {
-  final c = BiteSanoController();
+  late final c = widget.controller ?? BiteSanoController();
   int _tab = 0;
   AnalysisSnapshot? _detail;
   @override

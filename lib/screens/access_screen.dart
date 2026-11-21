@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../controllers/bitesano_controller.dart';
 import '../theme/app_theme.dart';
-import '../utils/profile_validation.dart';
 import '../widgets/brand.dart';
+import 'register_screen.dart';
 
 class AccessScreen extends StatefulWidget {
   final BiteSanoController controller;
@@ -18,32 +18,68 @@ class AccessScreen extends StatefulWidget {
 }
 
 class _AccessScreenState extends State<AccessScreen> {
-  final _name = TextEditingController();
-  final _email = TextEditingController();
+  final _identifier = TextEditingController();
+  final _password = TextEditingController();
   final _form = GlobalKey<FormState>();
   bool _remember = true;
   bool _working = false;
+  bool _hidePassword = true;
+  String? _error;
+  String? _notice;
+
   @override
   void dispose() {
-    _name.dispose();
-    _email.dispose();
+    _identifier.dispose();
+    _password.dispose();
     super.dispose();
   }
 
-  Future<void> _enter({bool guest = false}) async {
-    if (!guest && _form.currentState?.validate() != true) return;
+  Future<void> _login() async {
+    if (_form.currentState?.validate() != true) return;
+    setState(() {
+      _working = true;
+      _error = null;
+    });
+    final onEntered = widget.onEntered;
+    final error = await widget.controller.login(
+      _identifier.text,
+      _password.text,
+      _remember,
+    );
+    if (error == null) {
+      onEntered();
+    } else if (mounted) {
+      setState(() {
+        _working = false;
+        _error = error;
+      });
+    }
+  }
+
+  Future<void> _guest() async {
     setState(() => _working = true);
     final onEntered = widget.onEntered;
-    final accepted = await widget.controller.enter(
-      guest ? 'Invitado' : _name.text,
-      guest ? '' : _email.text,
-      guest ? false : _remember,
-    );
+    final accepted = await widget.controller.enter('Invitado', '', false);
     if (accepted) {
       onEntered();
     } else if (mounted) {
       setState(() => _working = false);
     }
+  }
+
+  Future<void> _openRegister() async {
+    final registered = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(
+        builder: (_) => RegisterScreen(controller: widget.controller),
+      ),
+    );
+    if (registered == null || !mounted) return;
+    setState(() {
+      _identifier.text = registered;
+      _password.clear();
+      _error = null;
+      _notice = 'Cuenta creada. Inicia sesión con tu contraseña.';
+    });
   }
 
   @override
@@ -93,45 +129,61 @@ class _AccessScreenState extends State<AccessScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Bienvenido',
+                        'Iniciar sesión',
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                       const SizedBox(height: 6),
-                      const Text('Crea tu perfil local para empezar.'),
+                      const Text('Entra con tu cuenta de BiteSano.'),
                       const SizedBox(height: 20),
                       const Text(
-                        'Nombre',
+                        'Correo o nombre de usuario',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
-                        controller: _name,
-                        validator: validateProfileName,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        maxLength: 80,
-                        textCapitalization: TextCapitalization.words,
+                        controller: _identifier,
+                        keyboardType: TextInputType.emailAddress,
+                        autocorrect: false,
+                        textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
                           prefixIcon: Icon(Icons.person_outline),
-                          hintText: 'Tu nombre',
+                          hintText: 'ejemplo@correo.com',
                         ),
+                        validator: (v) => (v?.trim().isEmpty ?? true)
+                            ? 'Escribe tu correo o usuario'
+                            : null,
                       ),
                       const SizedBox(height: 18),
                       const Text(
-                        'Correo electrónico (opcional)',
+                        'Contraseña',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
-                        controller: _email,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.mail_outline),
-                          hintText: 'ejemplo@correo.com',
+                        controller: _password,
+                        obscureText: _hidePassword,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        onFieldSubmitted: (_) => _working ? null : _login(),
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          hintText: 'Tu contraseña',
+                          suffixIcon: IconButton(
+                            tooltip: _hidePassword ? 'Mostrar' : 'Ocultar',
+                            onPressed: () => setState(
+                              () => _hidePassword = !_hidePassword,
+                            ),
+                            icon: Icon(
+                              _hidePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                            ),
+                          ),
                         ),
-                        validator: validateOptionalEmail,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (v) =>
+                            (v?.isEmpty ?? true) ? 'Escribe tu contraseña' : null,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       CheckboxListTile(
                         contentPadding: EdgeInsets.zero,
                         value: _remember,
@@ -140,13 +192,40 @@ class _AccessScreenState extends State<AccessScreen> {
                         controlAffinity: ListTileControlAffinity.leading,
                         title: const Text('Recordarme en este dispositivo'),
                       ),
+                      if (_notice != null && _error == null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          _notice!,
+                          style: const TextStyle(color: BiteColors.green),
+                        ),
+                      ],
+                      if (_error != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          _error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       FilledButton.icon(
-                        onPressed: _working ? null : () => _enter(),
+                        onPressed: _working ? null : _login,
                         icon: const Icon(Icons.arrow_forward),
-                        label: const Text('Continuar al perfil'),
+                        label: const Text('Iniciar sesión'),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          const Text('¿No tienes cuenta?'),
+                          TextButton(
+                            onPressed: _working ? null : _openRegister,
+                            child: const Text('Crear cuenta'),
+                          ),
+                        ],
+                      ),
                       const Row(
                         children: [
                           Expanded(child: Divider()),
@@ -165,7 +244,7 @@ class _AccessScreenState extends State<AccessScreen> {
                       ),
                       const SizedBox(height: 14),
                       OutlinedButton.icon(
-                        onPressed: _working ? null : () => _enter(guest: true),
+                        onPressed: _working ? null : _guest,
                         icon: const Icon(Icons.person_outline),
                         label: const Text('Explorar como invitado'),
                       ),
@@ -182,7 +261,7 @@ class _AccessScreenState extends State<AccessScreen> {
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Modo local: no enviamos tu perfil a un servidor ni solicitamos contraseña.',
+                        'Tu cuenta se guarda solo en este dispositivo y la contraseña no se almacena en texto plano.',
                       ),
                     ),
                   ],

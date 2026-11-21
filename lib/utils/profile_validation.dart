@@ -36,3 +36,29 @@ String? validateCustomAllergy(String? value) {
     return 'Escribe un ingrediente válido';
   return null;
 }
+
+String? validateUsername(String? value) {
+  final text = value?.trim() ?? '';
+  if (text.isEmpty) return 'Escribe un nombre de usuario';
+  if (text.length < 3 || text.length > 30) return 'Usa entre 3 y 30 caracteres';
+  if (!RegExp(r'^[a-zA-Z0-9._-]+$').hasMatch(text)) {
+    return 'Solo letras, números, punto, guion y guion bajo';
+  }
+  return null;
+}
+
+String? validateRequiredEmail(String? value) {
+  if ((value?.trim() ?? '').isEmpty) return 'Escribe tu correo';
+  return validateOptionalEmail(value);
+}
+
+String? validatePassword(String? value) {
+  final text = value ?? '';
+  if (text.isEmpty) return 'Escribe una contraseña';
+  if (text.length < 8) return 'Mínimo 8 caracteres';
+  if (text.length > 64) return 'Máximo 64 caracteres';
+  if (!RegExp(r'[a-zA-Z]').hasMatch(text) || !RegExp(r'\d').hasMatch(text)) {
+    return 'Combina letras y números';
+  }
+  return null;
+}
