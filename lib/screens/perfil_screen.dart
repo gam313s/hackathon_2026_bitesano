@@ -26,8 +26,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildHeader(),
-                  const SizedBox(height: 24),
                   _buildUserCard(),
                   const SizedBox(height: 30),
                   _buildSectionTitle('Mi Perfil Médico', trailing: '4 activas'),
@@ -222,7 +220,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
       padding: const EdgeInsets.all(24),
       decoration: _cardDecoration(),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Row(
             children: [
