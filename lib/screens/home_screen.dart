@@ -20,7 +20,7 @@ class HomeScreen extends StatelessWidget {
 
   static const _tips = [
     (Icons.soup_kitchen_outlined, Color(0xFFFEF3C7), Color(0xFFB45309), 'Salsas con cacahuate oculto', 'En platos asiáticos como Pad Thai o Satay, las salsas espesas pueden contener pasta de maní sin indicarse.'),
-    (Icons.skillet_outlined, Color(0xFFD1FAE5), BiteSanoColors.deepForest, 'Pregunta clave al chef: Fritura compartida', 'Consulta si las guarniciones se fríen en el mismo aceite usado para mariscos o productos con trigo.'),
+    (Icons.outdoor_grill_outlined, Color(0xFFD1FAE5), BiteSanoColors.deepForest, 'Pregunta clave al chef: Fritura compartida', 'Consulta si las guarniciones se fríen en el mismo aceite usado para mariscos o productos con trigo.'),
   ];
 
   @override

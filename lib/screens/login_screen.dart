@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../widgets/brand_components.dart';
+import 'main_shell_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -18,9 +19,7 @@ class LoginScreen extends StatelessWidget {
                 children: [
                   const AiBadge(),
                   const SizedBox(height: 26),
-                  const BrandMark(size: 88),
-                  const SizedBox(height: 12),
-                  const BiteSanoWordmark(fontSize: 25),
+                  const BiteSanoLogo(width: 240),
                   const SizedBox(height: 12),
                   Text(
                     'Come fuera con total seguridad y sin\nriesgos de alergias alimentarias.',
@@ -32,7 +31,7 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  _buildFormCard(),
+                  _buildFormCard(context),
                   const SizedBox(height: 26),
                   const Wrap(
                     alignment: WrapAlignment.center,
@@ -64,7 +63,7 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -96,7 +95,6 @@ class LoginScreen extends StatelessWidget {
           const SizedBox(height: 10),
           TextField(
             readOnly: true,
-            enableInteractiveSelection: false,
             keyboardType: TextInputType.emailAddress,
             decoration: _inputDecoration(
               hintText: 'ejemplo@correo.com',
@@ -122,7 +120,6 @@ class LoginScreen extends StatelessWidget {
           const SizedBox(height: 10),
           TextField(
             readOnly: true,
-            enableInteractiveSelection: false,
             obscureText: true,
             decoration: _inputDecoration(
               hintText: '••••••••••••',
@@ -144,53 +141,40 @@ class LoginScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          Container(
+          SizedBox(
             height: 58,
-            decoration: BoxDecoration(
-              color: BiteSanoColors.forest,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: BiteSanoColors.forest.withValues(alpha: 0.24),
-                  blurRadius: 14,
-                  offset: const Offset(0, 7),
-                ),
-              ],
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Iniciar Sesión',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
+            child: FilledButton(
+              onPressed: () {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const MainShellScreen(),
                   ),
+                );
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: BiteSanoColors.forest,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
                 ),
-                SizedBox(width: 12),
-                Icon(
-                  Icons.arrow_forward_rounded,
-                  color: Colors.white,
-                  size: 23,
+                elevation: 5,
+                shadowColor: BiteSanoColors.forest.withValues(alpha: 0.24),
+                textStyle: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Iniciar Sesión'),
+                  SizedBox(width: 12),
+                  Icon(Icons.arrow_forward_rounded, size: 23),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 20),
-          const _OrDivider(),
-          const SizedBox(height: 16),
-          const Row(
-            children: [
-              Expanded(
-                child: _SocialButton(icon: GoogleMark(), label: 'Google'),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: _SocialButton(icon: AppleMark(), label: 'Apple'),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -253,52 +237,4 @@ InputDecoration _inputDecoration({
       borderSide: const BorderSide(color: BiteSanoColors.forest, width: 1.4),
     ),
   );
-}
-
-class _OrDivider extends StatelessWidget {
-  const _OrDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Expanded(child: Divider(color: Color(0xFFD8E1EF))),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            'O CONTINÚA CON',
-            style: TextStyle(
-              color: BiteSanoColors.mutedText,
-              fontSize: 13,
-              letterSpacing: 1.1,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const Expanded(child: Divider(color: Color(0xFFD8E1EF))),
-      ],
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  const _SocialButton({required this.icon, required this.label});
-
-  final Widget icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: BiteSanoColors.fieldBackground,
-        borderRadius: BorderRadius.circular(17),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [icon, const SizedBox(width: 9), Text(label)],
-      ),
-    );
-  }
 }
