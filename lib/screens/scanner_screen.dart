@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/brand_components.dart';
+import 'allergy_results_screen.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -14,7 +15,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   bool _showAltSample = false;
 
   // Aquí conectarás el http.post al backend de tu compañero
-  Future<void> _runScan(String source) async {
+  Future<void> _runScan() async {
     if (_scanning) return;
     setState(() => _scanning = true);
     await Future.delayed(const Duration(milliseconds: 900));
@@ -23,8 +24,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
       _scanning = false;
       _showAltSample = !_showAltSample;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Análisis completado ($source)'), duration: const Duration(seconds: 1)),
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const AllergyResultsScreen()),
     );
   }
 
@@ -188,9 +189,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _actionCol(Icons.photo_library_outlined, 'Galería', false, () => _runScan('Galería')),
-                _actionCol(Icons.document_scanner_rounded, 'Escanear Todo', true, () => _runScan('Cámara')),
-                _actionCol(Icons.qr_code_scanner_rounded, 'Menú QR', false, () => _runScan('QR')),
+                _actionCol(Icons.photo_library_outlined, 'Galería', false, _runScan),
+                _actionCol(Icons.document_scanner_rounded, 'Escanear Todo', true, _runScan),
+                _actionCol(Icons.qr_code_scanner_rounded, 'Menú QR', false, _runScan),
               ],
             ),
           ],
