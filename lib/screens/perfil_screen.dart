@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import '../widgets/brand_components.dart';
 
 class PerfilScreen extends StatefulWidget {
-  const PerfilScreen({super.key});
+  const PerfilScreen({super.key, this.onManageAllergies, this.onOpenAbout});
+
+  final VoidCallback? onManageAllergies;
+  final VoidCallback? onOpenAbout;
 
   @override
   State<PerfilScreen> createState() => _PerfilScreenState();
@@ -257,7 +260,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
             ],
           ),
           const SizedBox(height: 22),
-          Container(
+          GestureDetector(
+            onTap: widget.onManageAllergies,
+            child: Container(
             height: 58,
             decoration: BoxDecoration(
               color: BiteSanoColors.forest,
@@ -285,6 +290,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ),
               ],
             ),
+          ),
           ),
         ],
       ),
@@ -329,16 +335,20 @@ class _PerfilScreenState extends State<PerfilScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       decoration: _cardDecoration(),
-      child: const Column(
+      child: Column(
         children: [
-          _LinkTile(icon: Icons.info_outline_rounded, label: 'Acerca de BiteSano'),
-          Divider(color: Color(0xFFD8E1EF), height: 1),
           _LinkTile(
+            icon: Icons.info_outline_rounded,
+            label: 'Acerca de BiteSano',
+            onTap: widget.onOpenAbout,
+          ),
+          const Divider(color: Color(0xFFD8E1EF), height: 1),
+          const _LinkTile(
             icon: Icons.enhanced_encryption_outlined,
             label: 'Privacidad y Encriptación Médica',
           ),
-          Divider(color: Color(0xFFD8E1EF), height: 1),
-          _LinkTile(icon: Icons.support_agent_rounded, label: 'Ayuda y Soporte'),
+          const Divider(color: Color(0xFFD8E1EF), height: 1),
+          const _LinkTile(icon: Icons.support_agent_rounded, label: 'Ayuda y Soporte'),
         ],
       ),
     );
@@ -546,14 +556,17 @@ class _SwitchTile extends StatelessWidget {
 }
 
 class _LinkTile extends StatelessWidget {
-  const _LinkTile({required this.icon, required this.label});
+  const _LinkTile({required this.icon, required this.label, this.onTap});
 
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 18),
       child: Row(
         children: [
@@ -572,6 +585,7 @@ class _LinkTile extends StatelessWidget {
           Icon(Icons.chevron_right_rounded, color: BiteSanoColors.mutedText),
         ],
       ),
+    ),
     );
   }
 }

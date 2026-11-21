@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/bite_sano_bottom_nav.dart';
+import 'acercade_screen.dart';
+import 'configuracion_screen.dart';
 import 'home_screen.dart';
 import 'perfil_screen.dart';
 import 'scanner_screen.dart';
@@ -17,17 +19,41 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
   void _setTab(int i) => setState(() => _index = i);
 
+  void _openAllergySettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => ConfiguracionScreen(
+          onContinueToScanner: () {
+            Navigator.pop(context);
+            _setTab(1);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _openAbout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(builder: (_) => const AcercaDeScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tabs = [
       HomeScreen(
         onOpenScanner: () => _setTab(1),
         onOpenHistory: () => _setTab(2),
-        onEditAllergies: () => _setTab(3), // Te lleva directo a PerfilScreen
+        onEditAllergies: _openAllergySettings,
       ),
       const ScannerScreen(),
       const Center(child: Text('Historial', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
-      const PerfilScreen(),
+      PerfilScreen(
+        onManageAllergies: _openAllergySettings,
+        onOpenAbout: _openAbout,
+      ),
     ];
 
     return Scaffold(

@@ -70,6 +70,13 @@ class _AcercaDeScreenState extends State<AcercaDeScreen> {
   Widget _buildHeader() {
     return Row(
       children: [
+        if (Navigator.of(context).canPop())
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.arrow_back_rounded),
+            color: BiteSanoColors.deepForest,
+            tooltip: 'Volver',
+          ),
         const BrandMark(size: 44),
         const SizedBox(width: 12),
         Expanded(
