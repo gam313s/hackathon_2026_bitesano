@@ -43,10 +43,8 @@ class _SplashScreenState extends State<SplashScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const AiBadge(),
-                const SizedBox(height: 40),
-                const BrandMark(size: 112),
-                const SizedBox(height: 20),
-                const BiteSanoWordmark(fontSize: 32),
+                const SizedBox(height: 24),
+                const BiteSanoLogo(width: 300),
                 const SizedBox(height: 16),
                 Text(
                   'Come fuera con total seguridad\ny sin riesgos de alergias alimentarias.',

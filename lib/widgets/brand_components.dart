@@ -8,6 +8,21 @@ abstract final class BiteSanoColors {
   static const mutedText = Color(0xFF75817F);
 }
 
+class BiteSanoLogo extends StatelessWidget {
+  const BiteSanoLogo({super.key, this.width = 280});
+
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/bitesano_logo.png',
+      width: width,
+      fit: BoxFit.contain,
+    );
+  }
+}
+
 class AiBadge extends StatelessWidget {
   const AiBadge({super.key});
 

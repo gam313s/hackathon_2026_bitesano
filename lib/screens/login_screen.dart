@@ -19,9 +19,7 @@ class LoginScreen extends StatelessWidget {
                 children: [
                   const AiBadge(),
                   const SizedBox(height: 26),
-                  const BrandMark(size: 88),
-                  const SizedBox(height: 12),
-                  const BiteSanoWordmark(fontSize: 25),
+                  const BiteSanoLogo(width: 240),
                   const SizedBox(height: 12),
                   Text(
                     'Come fuera con total seguridad y sin\nriesgos de alergias alimentarias.',
@@ -177,17 +175,6 @@ class LoginScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Row(
-            children: [
-              Expanded(
-                child: _SocialButton(icon: GoogleMark(), label: 'Google'),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: _SocialButton(icon: AppleMark(), label: 'Apple'),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -250,26 +237,4 @@ InputDecoration _inputDecoration({
       borderSide: const BorderSide(color: BiteSanoColors.forest, width: 1.4),
     ),
   );
-}
-
-class _SocialButton extends StatelessWidget {
-  const _SocialButton({required this.icon, required this.label});
-
-  final Widget icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: BiteSanoColors.fieldBackground,
-        borderRadius: BorderRadius.circular(17),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [icon, const SizedBox(width: 9), Text(label)],
-      ),
-    );
-  }
 }
